@@ -4,7 +4,7 @@ close all
 %% generate a sparse ill-conditioned positive definite matrix
 n = 1e5;
 density = 2/n;
-cond = 2/eps;
+cond = 1e4/eps;
 rc = 1/cond;
 m = 10;
 Matrices = cell(m,1);
