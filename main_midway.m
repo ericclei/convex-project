@@ -2,14 +2,14 @@ clear
 close all
 clc
 %%
-load('Matrices.mat')
+load('matrices.mat')
 threshold = .1/eps;
 Er = cell(m,1);
 EndResult = cell(m,1);
 T = 10;
 n_shrinkage = 50;
-lo = .9;
-hi = 1.1;
+lo = .99;
+hi = 1.01;
 for k=1:m
   k
   A = Matrices{k};
@@ -25,7 +25,7 @@ for k=1:m
        NewA = A(nz).*P;
        A(nz) = NewA;
      end
-     PerturbedMatrices{1} = A;
+     PerturbedMatrices{i} = A;
      % Run SOR
      tic
      x = A\b;%x = successive_over_relaxation(A,b,w,1);
@@ -72,4 +72,4 @@ hold on
 plot(.25, no_shrink_er,'x')
 hold off
 %%
-save('result.mat','Er')
+save('midway_result.mat','Er')
