@@ -24,4 +24,6 @@ end
 %     nnzr = nnz(R);
 % end
 %%
-save matrices_n10000
+b = randn(n,1);
+%%
+save matrices
