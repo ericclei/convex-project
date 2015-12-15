@@ -126,8 +126,8 @@ ylabel('L_2 error with shrinkage')
 %%
 clear Matrices
 clear PerturbedMatrices
-save('midway_finalerror.mat')
-% save('midway_errorpath')
+save('main_finalerror.mat')
+% save('main_errorpath')
 
 % Er: mx1 cell
 % Er{k} is a (T+1) x (n_shrinkage+2) matrix of error values (norm(Ax-b))
