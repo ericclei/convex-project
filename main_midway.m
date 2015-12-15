@@ -6,10 +6,11 @@ load('matrices.mat')
 threshold = .1/eps;
 Er = cell(m,1);
 EndResult = cell(m,1);
-T = 10;
+T = 1;
 n_shrinkage = 50;
-lo = .99;
-hi = 1.01;
+pert=.00001;
+lo = 1-pert;
+hi = 1+pert;
 for k=1:m
   k
   A = Matrices{k};
@@ -20,7 +21,7 @@ for k=1:m
   for i = 1:T+1
      if i>1
        A=PerturbedMatrices{1};
-       P=(rand(nnz(A),1)-lo)/(hi-lo);
+       P=(rand(nnz(A),1))*(hi-lo)+lo;
        nz = A~=0;
        NewA = A(nz).*P;
        A(nz) = NewA;
@@ -60,7 +61,7 @@ no_shrink_er = nan(m,1);
 shrink_er = nan(m,n_shrinkage);
 for k=1:m
   true_er = Er{k}(1,:);
-  pert_er = mean(Er{k}(2:end,:));
+  pert_er = mean(Er{k}(2:end,:),1);
   change = pert_er - true_er;
   no_shrink_er(k) = change(1);
   shrink_er(k,:) = change(2:end);
@@ -72,4 +73,4 @@ hold on
 plot(.25, no_shrink_er,'x')
 hold off
 %%
-save('midway_result.mat','Er')
+% save('midway_result_n1000.mat')

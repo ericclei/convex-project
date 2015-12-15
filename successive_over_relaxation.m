@@ -7,27 +7,36 @@ if ~exist('verbose','var')
   verbose = 0;
 end
 have_x_star = exist('x_star','var');
+if nargout==3 && ~have_x_star
+  error('need x_star to give err_path')
+end
 n = size(A,1);
 assert(size(A,2)==n);
 if have_x_star, err_path = nan(1e9,1); end
 L = tril(A);
+L = sparse(L);
 U = A - L;
+U = sparse(U);
 invL = L^-1;
 x = invL * b;
-if have_x_star, err_path(1) = norm(x-x_star); end
-tol = 1e-6;
+if have_x_star
+  norm_x_star = norm(x_star);
+  err_path(1) = norm(x-x_star)/norm_x_star; 
+end
+tol = 1e-4;
 n_iter = 0;
 while 1
   n_iter = n_iter+1;
   z = b-U*x;
   x_gs = invL*z;
   xnew = (1-w)*x+w*x_gs;
-  if have_x_star, err_path(1+n_iter) = norm(xnew-x_star); end
+  if have_x_star, err_path(1+n_iter) = norm(xnew-x_star)/norm_x_star; end
+  delta = norm(xnew-x)/norm(x);
   if verbose && mod(n_iter,1000)==0
     disp(n_iter);
-    disp(max(abs(xnew-x)));
+    disp(delta);
   end
-  if max(abs(xnew-x))<=tol
+  if delta<=tol
     x = xnew;
     break
   end
