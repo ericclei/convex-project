@@ -23,7 +23,7 @@ while 1
   x_gs = invL*z;
   xnew = (1-w)*x+w*x_gs;
   if have_x_star, err_path(1+n_iter) = norm(xnew-x_star); end
-  if verbose && mod(n_iter,10000)==0
+  if verbose && mod(n_iter,1000)==0
     disp(n_iter);
     disp(max(abs(xnew-x)));
   end

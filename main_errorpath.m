@@ -7,9 +7,9 @@ threshold = .1/eps;
 Er = cell(m,1);
 EndResult = cell(m,1);
 T = 1;
-ErrPath = cell(m,T+1);
 n_shrinkage = 1;
 n_methods = n_shrinkage+2;
+ErrPath = cell(m,T+1,n_methods);
 pert = .0001;
 lo = 1-pert;
 hi = 1+pert;
@@ -35,7 +35,7 @@ for k=1:m
      PerturbedMatrices{i} = A;
      % Run SOR
      tic
-     [x,~,ErrPath{k,i}(:,1)] = symmetric_successive_over_relaxation(A,b,w,1,x_star);
+     [x,~,ErrPath{k,i,1}] = symmetric_successive_over_relaxation(A,b,w,1,x_star);
 %      x = jacobi_method(A,b);
      toc
      end_result{i,1} = x;
@@ -43,8 +43,8 @@ for k=1:m
      er(i,1) = norm(x-x_star);
      % Run preconditioned SOR
      tic
-     invP = diag(1./diag(A));
-     [x,~,ErrPath{k,i}(:,2)] = symmetric_successive_over_relaxation(invP*A,invP*b,w,1,x_star);
+     invP = spdiags(1./diag(A),0,n,n);
+     [x,~,ErrPath{k,i,2}] = symmetric_successive_over_relaxation(invP*A,invP*b,w,1,x_star);
 %      x = jacobi_method(invP*A,invP*b);
      toc
      end_result{i,2} = x;
@@ -55,9 +55,9 @@ for k=1:m
      min_eig = eigs(A, 1, 'SM');
      for j = 1:n_shrinkage
          j
-         shA = LinearShrinkage(A, max_eig, min_eig, threshold, 0.01 * j);
+         shA = LinearShrinkage(A, max_eig, min_eig, threshold, 0.1 * j);
          % Run SOR
-         [x,~,ErrPath{k,i}(:,j+n_methods-n_shrinkage)] = symmetric_successive_over_relaxation(shA,b,w,1,x_star);
+         [x,~,ErrPath{k,i,j+n_methods-n_shrinkage}] = symmetric_successive_over_relaxation(shA,b,w,1,x_star);
 %          x = jacobi_method(shA,b);
          % Find obj value
          end_result{i,j+n_methods-n_shrinkage}=x;
@@ -92,4 +92,4 @@ hold on
 plot(.25, no_shrink_er,'x')
 hold off
 %%
-save('midway_result.mat','Er')
+save('midway_errorpath.mat','Er','EndResult','ErrPath')
