@@ -73,13 +73,15 @@ for k=1:m
 end
 %%
 no_shrink_er = nan(m,1);
+precond_er = nan(m,1);
 shrink_er = nan(m,n_shrinkage);
 for k=1:m
   true_er = Er{k}(1,:);
   pert_er = mean(Er{k}(2:end,:),1);
   change = pert_er - true_er;
   no_shrink_er(k) = change(1);
-  shrink_er(k,:) = change(2:end);
+  precond_er(k) = change(2);
+  shrink_er(k,:) = change(1+n_methods-n_shrinkage:end);
 end
 %%
 figure,semilogy(.01:.01:.01*n_shrinkage,shrink_er')
