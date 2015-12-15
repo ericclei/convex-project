@@ -2,14 +2,14 @@ clear
 home
 close all
 %% generate a sparse ill-conditioned positive definite matrix
-n = 1e5;
+n = 1e4;
 density = 2/n;
 cond = 1e4/eps;
 rc = 1/cond;
 m = 10;
 Matrices = cell(m,1);
 %%
-for i=2:m
+for i=1:m
   tic
   Matrices{i} = sprandsym(n, density, rc, 1);
   toc
@@ -24,4 +24,4 @@ end
 %     nnzr = nnz(R);
 % end
 %%
-save matrices
+save matrices_n10000
