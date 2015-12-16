@@ -1,9 +1,9 @@
-function [x,n_iter,err_path] = symmetric_successive_over_relaxation(A,b,w,verbose,x_star)
+function [x,n_iter,err_path] = symmetric_successive_over_relaxation(A,b,w,verbose,original_A)
 
 if ~exist('verbose','var')
   verbose = 0;
 end
-have_x_star = exist('x_star','var');
+have_x_star = exist('original_A','var');
 if nargout==3 && ~have_x_star
   error('need x_star to give err_path')
 end
@@ -19,8 +19,8 @@ U = sparse(U);
 invDwL = (D+w*L)^-1;
 x = invDwL*w*b;
 if have_x_star
-  norm_x_star = norm(x_star);
-  err_path(1) = norm(x-x_star)/norm_x_star; 
+  norm_x_star = 1;%norm(x_star);
+  err_path(1) = norm(original_A*x-b);%norm(x-x_star)/norm_x_star; 
 end
 n_iter = 0;
 while 1
@@ -30,8 +30,10 @@ while 1
   else
     xnew = invDwL*(w*b-(w*U+(w-1)*D)*x);
   end
-  if have_x_star, err_path(1+n_iter) = norm(xnew-x_star)/norm_x_star; end
-  delta = norm(xnew-x)/norm(x);
+  if have_x_star, 
+    err_path(1+n_iter) = norm(original_A*x-b);%norm(xnew-x_star)/norm_x_star; 
+  end
+  delta = norm(xnew-x);%/norm(x);
   del(n_iter) = delta;
   if verbose && mod(n_iter,1000)==0
     disp(n_iter);
@@ -43,4 +45,6 @@ while 1
   end
   x = xnew;
 end
-if have_x_star, err_path = err_path(1:n_iter+1); end
+if have_x_star, 
+  err_path = err_path(1:n_iter+1); 
+end

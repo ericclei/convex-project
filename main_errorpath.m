@@ -2,13 +2,14 @@ clear
 close all
 clc
 %%
+load conjgrad_result PerturbedMatrices
 load('matrices_n10000.mat')
-threshold = .5/eps;
+threshold = 1e5;%.5/eps;
 Er = cell(m,1);
 EndResult = cell(m,1);
-T = 10;
+T = 1;
 n_shrinkage = 1;
-n_methods = n_shrinkage+2;
+n_methods = n_shrinkage+1;
 ErrPath = cell(m,T+1,n_methods);
 pert=.00001;
 lo = 1-pert;
@@ -18,9 +19,10 @@ w = 1;
 for k=1:m
   k
   A = Matrices{k};
+  b = Bs{k};
   x_star = A\b;
   original_A = A;
-  PerturbedMatrices = cell(T,1);
+%   PerturbedMatrices = cell(T,1);
   end_result = cell(T+1,n_methods);
   %%
   warning off
@@ -28,46 +30,52 @@ for k=1:m
   for i = 1:T+1
     i
     if i>1
-      A=original_A;
-      P=(rand(nnz(A),1))*(hi-lo)+lo;
-      nz = A~=0;
-      NewA = A(nz).*P;
-      A(nz) = NewA;
-      PerturbedMatrices{i-1} = A;
+      A = PerturbedMatrices{k,i-1};
+%       A=original_A;
+%       P=(rand(nnz(A),1))*(hi-lo)+lo;
+%       nz = A~=0;
+%       NewA = A(nz).*P;
+%       A(nz) = NewA;
+%       PerturbedMatrices{i-1} = A;
     end
     % Run SOR
     tic
     x = A\b;
-%     [x,n_iter,ErrPath{k,i,1}] = symmetric_successive_over_relaxation(A,b,w,1,x_star);
+%     [x,n_iter,ErrPath{k,i,1}] = symmetric_successive_over_relaxation(A,b,w,1,original_A);
     toc
 %     n_iter
     end_result{i,1} = x;
-    er(i,1) = norm(x-x_star)/norm(x_star);
+%     er(i,1) = norm(x-x_star)/norm(x_star);
+    er(i,1) = norm(original_A*x-b);
     % Run preconditioned SOR
-    tic
+%     tic
     invD = spdiags(1./diag(A),0,n,n);
     x = (invD*A)\(invD*b);
 %     [x,n_iter,ErrPath{k,i,2}] = symmetric_successive_over_relaxation(invD*A,invD*b,w,1,x_star);
-    toc
+%     toc
 %     n_iter
-    end_result{i,2} = x;
-    er(i,2) = norm(x-x_star)/norm(x_star);
+%     end_result{i,2} = x;
+%     er(i,2) = norm(x-x_star)/norm(x_star);
+
+    er(i,2) = norm(original_A*x-b);
 %%
     % Find eigenvalues
     max_eig = eigs(A, 1);
     min_eig = eigs(A, 1, 'SM');
     for j = 1:n_shrinkage
        j
-       A_ls = LinearShrinkage(A, max_eig, min_eig, threshold, 1e-9 * j);
+       A_ls = LinearShrinkage(A, max_eig, min_eig, threshold, .1 * j);
        % Run SOR
        tic
        x = A_ls\b;
-%        [x,n_iter,ErrPath{k,i,j+n_methods-n_shrinkage}] = symmetric_successive_over_relaxation(A_ls,b,w,1,x_star);
+%        [x,n_iter,ErrPath{k,i,j+n_methods-n_shrinkage}] = symmetric_successive_over_relaxation(A_ls,b,w,1,original_A);
        toc
 %        n_iter
        % Find obj value
        end_result{i,j+n_methods-n_shrinkage}=x;
-       er(i,j+n_methods-n_shrinkage) = norm(x-x_star)/norm(x_star);
+%        er(i,j+n_methods-n_shrinkage) = norm(x-x_star)/norm(x_star);
+
+       er(i,j+n_methods-n_shrinkage) = norm(original_A*x-b);
     end
   end
   warning on
@@ -91,30 +99,33 @@ for k=1:m
   precond_er(k) = change(2);
   shrink_er(k,:) = change(1+n_methods-n_shrinkage:end);
 end
+% %%
+% figure
+% hold on
+% % idx = [1:8 10];
+% idx = 1:m;
+% plot(OrigEr(idx,1),squeeze(mean(PertEr(idx,:,1),2)),'o','col','b')
+% plot(OrigEr(idx,2),squeeze(mean(PertEr(idx,:,2),2)),'s','col','r')
+% plot(OrigEr(idx,3),squeeze(mean(PertEr(idx,:,3),2)),'x','col','m')
+% plot([0 1],[0 1],'col','black')
+% hold off
+% xlabel('unperturbed L_2 error')
+% ylabel('perturbed L_2 error')
+% legend({'plain','preconditioned','shrinkage'},'location','best')
 %%
+load for_scatter
+idx = [1:2 4:m];
 figure
 hold on
-% idx = [1:8 10];
-idx = 1:m;
-plot(OrigEr(idx,1),squeeze(mean(PertEr(idx,:,1),2)),'o','col','b')
-plot(OrigEr(idx,2),squeeze(mean(PertEr(idx,:,2),2)),'s','col','r')
-plot(OrigEr(idx,3),squeeze(mean(PertEr(idx,:,3),2)),'x','col','m')
-plot([0 1],[0 1],'col','black')
+scatter(squeeze(mean(PertEr(idx,:,1),2)),squeeze(mean(PertEr(idx,:,1+n_methods-n_shrinkage),2)),200,'filled');
+scatter(X,Y,200,'filled');
 hold off
-xlabel('unperturbed L_2 error')
-ylabel('perturbed L_2 error')
-legend({'plain','preconditioned','shrinkage'},'location','best')
-%%
-figure
-hold on
-for k=1:m
-%   if k==9, continue; end
-  plot(mean(PertEr(k,:,1)),mean(PertEr(k,:,3)),'o')
-end
-plot([.75 1.25],[.75 1.25],'col','black')
-hold off
-xlabel('L_2 error plain')
-ylabel('L_2 error with shrinkage')
+xlabel('Error with exact solution')
+ylabel('Error with conditioning')
+legend({'Linear Shrinkage','Spectral Filtering'},'location','se')
+curtick = get(gca, 'XTick');
+set(gca, 'XTickLabel', cellstr(num2str(curtick(:))));
+set(gca,'FontSize',20)
 %%
 % figure,semilogy(.01:.01:.01*n_shrinkage,shrink_er')
 % xlabel('\alpha'),ylabel('L_2 error')
@@ -124,9 +135,9 @@ ylabel('L_2 error with shrinkage')
 % hold off
 % title('x=no shrinkage, o=precond, -=shrinkage')
 %%
-clear Matrices
-clear PerturbedMatrices
-save('main_finalerror.mat')
+% clear Matrices
+% clear PerturbedMatrices
+% save('main_finalerror.mat')
 % save('main_errorpath')
 
 % Er: mx1 cell
